@@ -12,7 +12,7 @@ def fac(n):
 
 class Stencil(object):
     """
-    A Stencil is a list of integer that work as relative indices in an array
+    A Stencil is a list of integers that work as relative indices in an array
     of regularly spaced evaluations of a function y. These points are meant to
     be used as cohefficients in finite differences schemes for differentiation
     and integration. For example, the stencil [0, 1, 2] refers to the elements
