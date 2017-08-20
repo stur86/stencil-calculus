@@ -12,9 +12,28 @@ where `h` is the step. This function uses evaluations at the given index, one st
 uses a `[0, 1, 2]` stencil and is built on a 2nd order Taylor series expansion of `f`. 
 The `Stencil` class allows one to generalise these formulas and compute finite difference and integration formulas of any order for any stencil. The only restriction is that the order of the approximation must be strictly lower than the length of the stencil. This class was inspired by the excellent explanation and applet on [Cameron Taylor's website](http://web.media.mit.edu/~crtaylor/calculator.html), and works off the same formula.
 
+## Installation and testing
+
+To install the library you can simply use 
+
+    python setup.py install
+
+while in the repository folder, or (better, in my opinion)
+
+    pip install ./stencil-calculus
+
+while in the parent folder. Using `pip` will automatically check for dependencies (`numpy`) as well.  
+To test the module, simply run
+
+    python test.py
+
 ## Usage
 
-The `Stencil` class is instantiated with `Stencil(s)`, where `s` is an array of integers representing the needed stencil. The class object created then has the following methods:
+The `Stencil` class is instantiated with `Stencil(s)`, where `s` is an array of integers representing the needed stencil. After installing, it can be imported with 
+
+    from stencils import Stencil
+
+The class object created then has the following methods:
 
 * `difference_weights(n, div_fac=False)`: generates array of weights for differentiation of order `n`. If `div_fac` is set to `True`, the weights will be returned for the derivative divided by `n!` (this is potentially convenient if the derivative is to be used in a Taylor series)
 * `integral_weights(n)`: generates array of weights for integration, based on an expansion of order `n`
@@ -22,4 +41,5 @@ The `Stencil` class is instantiated with `Stencil(s)`, where `s` is an array of 
 * `derive(x, y, n=1)`: return the derivative of order `n` of function `y` evaluated on points `x`
 * `integral_matrix(n, l, h)`: return an `lxl` matrix `A` for integration using an expansion of order `n` of a function evaluated on `l` points with spacing `h` such that `np.dot(A, f)` will be the desired integral
 * `integrate(x, y, n=1)`: return the integral using an expansion of order `n` of function `y` evaluated on points `x`
+
 
