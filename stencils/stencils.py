@@ -44,7 +44,7 @@ class Stencil(object):
         return self._stencil.copy()
 
     def difference_weights(self, n, div_fac=False):
-        """ 
+        """
         Return the weight cohefficients w_i for computing the derivative of
         order n with the given stencil, such that
 
@@ -83,7 +83,7 @@ class Stencil(object):
 
           _
          | x+h
-         | 
+         |
          |     f(x) dx = (w_1*f(x+s_1*h) + w_2*f(x+s_2*h) + ... )*h
         _| x
 
@@ -106,3 +106,55 @@ class Stencil(object):
             cint += cf/(i+1.0)*(s_ext)**i
 
         return cint
+
+    def difference_matrix(self, n, l, h, div_fac=False):
+        """
+        Return an lxl matrix for differentiation of order n of a function
+        evaluated on l points:
+
+        A.f = df/dx
+
+        Arguments:
+        |   n (int): order of requested derivative
+        |   l (int): size of the matrix
+        |   h (float): evaluation step
+        |   div_fac (bool): if True, return the cohefficients of the
+        |                   derivative divided by n!. This is convenient for
+        |                   use in Taylor series.
+
+        Returns:
+        |   diff_matrix (np.ndarray): matrix that if dotted to an array will
+        |                             compute its derivative
+
+        """
+
+        A = np.zeros((l, l))
+        weights = self.difference_weights(n, div_fac)
+
+        for s, w in zip(self.stencil, weights):
+            A += np.diag([w]*(l-abs(s)), k=s)
+
+        # Fix edges
+        A *= np.where(np.isclose(np.sum(A, axis=0), 0), 1, 0)[:, None]
+
+        return A/h**n
+
+    def derive(self, x, y, n):
+        """
+        Compute the derivative of y in x at the order n using this stencil.
+        Warning: the derivative may be unreliable at the edges.
+
+        Arguments:
+        |   x (np.ndarray): x axis (assumed to be equally spaced)
+        |   y (np.ndarray): y axis (function evaluated at points x)
+        |   n (int): order of the desired derivative
+
+        Returns:
+        | dny_dxn (np.ndarray): derivative
+
+        """
+
+        l = len(x)
+        h = x[1]-x[0]
+
+        return np.dot(self.difference_matrix(n, l, h), y)
