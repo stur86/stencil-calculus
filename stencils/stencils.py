@@ -135,11 +135,11 @@ class Stencil(object):
             A += np.diag([w]*(l-abs(s)), k=s)
 
         # Fix edges
-        A *= np.where(np.isclose(np.sum(A, axis=0), 0), 1, 0)[:, None]
+        A *= np.where(np.isclose(np.sum(A, axis=1), 0), 1, 0)[:, None]
 
         return A/h**n
 
-    def derive(self, x, y, n):
+    def derive(self, x, y, n=1):
         """
         Compute the derivative of y in x at the order n using this stencil.
         Warning: the derivative may be unreliable at the edges.
@@ -158,3 +158,57 @@ class Stencil(object):
         h = x[1]-x[0]
 
         return np.dot(self.difference_matrix(n, l, h), y)
+
+    def integral_matrix(self, n, l, h):
+        """
+        Return an lxl matrix for integration of a function
+        evaluated on l points:
+               _ 
+              | 
+        A.f = |  f dx
+             _| 
+
+        Arguments:
+        |   n (int): order of the Taylor approximation to use.
+        |   l (int): size of the matrix
+        |   h (float): evaluation step
+
+        Returns:
+        |   int_matrix (np.ndarray): matrix that if dotted to an array will
+        |                            compute its integral
+
+        """
+
+        A = np.zeros((l, l))
+        weights = self.integral_weights(n)
+
+        for s, w in zip(self.stencil, weights):
+            A += np.diag([w]*(l-abs(s)), k=s)
+
+        # Fix edges
+        A /= np.sum(A, axis=1)[:,None]
+
+        # Cumulation
+        A = np.dot(np.tril(np.ones((l, l))), A)
+
+        return A*h
+
+    def integrate(self, x, y, n=1):
+        """
+        Compute the integral of y in x at the order n using this stencil.
+        Warning: the integral may be unreliable at the edges.
+
+        Arguments:
+        |   x (np.ndarray): x axis (assumed to be equally spaced)
+        |   y (np.ndarray): y axis (function evaluated at points x)
+        |   n (int): order of the desired Taylor approximation
+
+        Returns:
+        | Y (np.ndarray): integral
+
+        """
+
+        l = len(x)
+        h = x[1]-x[0]
+
+        return np.dot(self.integral_matrix(n, l, h), y)

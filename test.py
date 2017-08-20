@@ -23,13 +23,13 @@ class TestStencil(unittest.TestCase):
             },
             'F': lambda x: -np.cos(x)
         },
-        'exp(x)': {
-            'f': np.exp,
+        'exp(-x)': {
+            'f': lambda x: np.exp(-x),
             'df': {
-                1: np.exp,
-                2: np.exp
+                1: lambda x: -np.exp(-x),
+                2: lambda x: np.exp(-x),
             },
-            'F': np.exp
+            'F': lambda x: -np.exp(-x),
         },
     }
 
@@ -77,6 +77,17 @@ class TestStencil(unittest.TestCase):
         # Simpson's rule
         st = Stencil([0, 1, 2])
         self.assertTrue(np.allclose(st.integral_weights(2)*6, [1, 4, 1]))
+
+        # Integration functions to test
+        x = np.linspace(0, 10, 1000)
+        h = x[1]-x[0]
+
+        for fname, fdef in self.test_funcs.iteritems():
+            f = fdef['f'](x)
+            F = fdef['F'](x)-fdef['F'](x[0])
+            self.assertLess(np.sum((F[1:-1]-st.integrate(x, f, 2)[1:-1])**2
+                                   )**0.5 /
+                            np.sum(F[1:-1]**2)**0.5, 1e-2)
 
 if __name__ == '__main__':
     unittest.main()
