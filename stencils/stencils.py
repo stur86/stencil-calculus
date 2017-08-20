@@ -24,7 +24,7 @@ class Stencil(object):
     differentiate a function using it, as well as the actual integration and
     differentiation methods.
 
-    Parameters:
+    Arguments:
     |   stencil ([int]): list of integers representing the relative indices
     |                    of the function evaluations to combine.
     """
@@ -43,17 +43,66 @@ class Stencil(object):
     def stencil(self):
         return self._stencil.copy()
 
-    def difference_weights(self):
-        pass
+    def difference_weights(self, n, div_fac=False):
+        """ 
+        Return the weight cohefficients w_i for computing the derivative of
+        order n with the given stencil, such that
+
+        d^n f      1
+        -----  = ---- (w_1*f(x+s_1*h) + w_2*f(x+s_2*h) + ... )
+        d x^n     h^n
+
+        where the s_i are the indices of the stencil and h the step.
+
+        Arguments:
+        |   n (int): order of requested derivative
+        |   div_fac (bool): if True, return the cohefficients of the
+        |                   derivative divided by n!. This is convenient for
+        |                   use in Taylor series.
+
+        Returns:
+        |   weights (np.ndarray): differentiation weights
+
+        """
+
+        if n >= self._L:
+            raise ValueError(
+                'Stencil length must be greater than derivative order n')
+
+        s = self.stencil
+
+        A = s[None, :]**np.arange(0, self._L)[:, None]
+        b = np.zeros(self._L)
+        b[n] = 1 if div_fac else fac(n)
+        return np.linalg.solve(A, b)
+
+    def integral_weights(self, n):
+        """
+        Return the weight cohefficients w_i for computing the integral of f
+        with a Taylor expansion of order n and the given stencil, such that
+
+          _
+         | x+h
+         | 
+         |     f(x) dx = (w_1*f(x+s_1*h) + w_2*f(x+s_2*h) + ... )*h
+        _| x
 
 
-def stencil_coeffs(s, d, div_fac=False):
-    s = np.array(s)
-    N = len(s)
-    if d >= N:
-        raise ValueError(
-            'Stencil length must be greater than derivative order d')
-    A = s[None, :]**np.arange(0, N)[:, None]
-    b = np.zeros(N)
-    b[d] = 1 if div_fac else factorial(d)
-    return np.linalg.solve(A, b)
+        where the s_i are the indices of the stencil and h the step.
+
+        Arguments:
+        |   n (int): order of the Taylor approximation to use.
+
+        Returns:
+        |   weights (np.ndarray): integration weights
+
+        """
+
+        cint = np.zeros(self._L)
+        s_ext = max(self.stencil)-min(self.stencil)  # Extent of the stencil
+
+        for i in range(n+1):
+            cf = self.difference_weights(i, True)
+            cint += cf/(i+1.0)*(s_ext)**i
+
+        return cint
