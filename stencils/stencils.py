@@ -107,7 +107,7 @@ class Stencil(object):
 
         return cint
 
-    def difference_matrix(self, n, l, h, div_fac=False):
+    def difference_matrix(self, n, l, h, div_fac=False, fix_edge=True):
         """
         Return an lxl matrix for differentiation of order n of a function
         evaluated on l points:
@@ -118,9 +118,11 @@ class Stencil(object):
         |   n (int): order of requested derivative
         |   l (int): size of the matrix
         |   h (float): evaluation step
-        |   div_fac (bool): if True, return the cohefficients of the
-        |                   derivative divided by n!. This is convenient for
-        |                   use in Taylor series.
+        |   div_fac (bool):  if True, return the cohefficients of the
+        |                    derivative divided by n!. This is convenient for
+        |                    use in Taylor series (default False).
+        |   fix_edge (bool): if True, set to zero all rows corresponding to
+        |                    edge points (default True).
 
         Returns:
         |   diff_matrix (np.ndarray): matrix that if dotted to an array will
@@ -135,7 +137,8 @@ class Stencil(object):
             A += np.diag([w]*(l-abs(s)), k=s)
 
         # Fix edges
-        A *= np.where(np.isclose(np.sum(A, axis=1), 0), 1, 0)[:, None]
+        if fix_edge:
+            A *= np.where(np.isclose(np.sum(A, axis=1), 0), 1, 0)[:, None]
 
         return A/h**n
 
@@ -159,7 +162,7 @@ class Stencil(object):
 
         return np.dot(self.difference_matrix(n, l, h), y)
 
-    def integral_matrix(self, n, l, h):
+    def integral_matrix(self, n, l, h, fix_edge=True):
         """
         Return an lxl matrix for integration of a function
         evaluated on l points:
@@ -172,6 +175,8 @@ class Stencil(object):
         |   n (int): order of the Taylor approximation to use.
         |   l (int): size of the matrix
         |   h (float): evaluation step
+        |   fix_edge (bool): if True, normalize all rows corresponding to
+        |                    edge points (default True).
 
         Returns:
         |   int_matrix (np.ndarray): matrix that if dotted to an array will
@@ -186,7 +191,8 @@ class Stencil(object):
             A += np.diag([w]*(l-abs(s)), k=s)
 
         # Fix edges
-        A /= np.sum(A, axis=1)[:,None]
+        if fix_edge:
+            A /= np.sum(A, axis=1)[:,None]
 
         # Cumulation
         A = np.dot(np.tril(np.ones((l, l))), A)
