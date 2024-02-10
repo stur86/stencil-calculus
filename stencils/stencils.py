@@ -5,9 +5,9 @@ import numpy as np
 
 def fac(n):
     if n < 0:
-        raise ValueError('Factorial of a negative number is invalid')
+        raise ValueError("Factorial of a negative number is invalid")
     else:
-        return np.prod(np.arange(1, n+1))
+        return np.prod(np.arange(1, n + 1))
 
 
 class Stencil(object):
@@ -30,11 +30,10 @@ class Stencil(object):
     """
 
     def __init__(self, stencil):
-
         # Check that it is valid
         stencil = np.array(stencil)
         if not (len(stencil.shape) == 1) or not (stencil % 1 == 0).all():
-            raise ValueError('Invalid stencil')
+            raise ValueError("Invalid stencil")
 
         self._stencil = np.array(stencil).astype(int)
         self._L = len(stencil)
@@ -66,12 +65,11 @@ class Stencil(object):
         """
 
         if n >= self._L:
-            raise ValueError(
-                'Stencil length must be greater than derivative order n')
+            raise ValueError("Stencil length must be greater than derivative order n")
 
         s = self.stencil
 
-        A = s[None, :]**np.arange(0, self._L)[:, None]
+        A = s[None, :] ** np.arange(0, self._L)[:, None]
         b = np.zeros(self._L)
         b[n] = 1 if div_fac else fac(n)
         return np.linalg.solve(A, b)
@@ -99,15 +97,14 @@ class Stencil(object):
         """
 
         cint = np.zeros(self._L)
-        s_ext = max(self.stencil)-min(self.stencil)  # Extent of the stencil
 
-        for i in range(n+1):
+        for i in range(n + 1):
             cf = self.difference_weights(i, True)
-            cint += cf/(i+1.0)*(s_ext)**i
+            cint += cf / (i + 1.0)
 
         return cint
 
-    def difference_matrix(self, n, l, h, div_fac=False, fix_edge=True):
+    def difference_matrix(self, n, m, h, div_fac=False, fix_edge=True):
         """
         Return an lxl matrix for differentiation of order n of a function
         evaluated on l points:
@@ -116,7 +113,7 @@ class Stencil(object):
 
         Arguments:
         |   n (int): order of requested derivative
-        |   l (int): size of the matrix
+        |   m (int): size of the matrix
         |   h (float): evaluation step
         |   div_fac (bool):  if True, return the cohefficients of the
         |                    derivative divided by n!. This is convenient for
@@ -130,17 +127,17 @@ class Stencil(object):
 
         """
 
-        A = np.zeros((l, l))
+        A = np.zeros((m, m))
         weights = self.difference_weights(n, div_fac)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(l-abs(s)), k=s)
+            A += np.diag([w] * (m - abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
             A *= np.where(np.isclose(np.sum(A, axis=1), 0), 1, 0)[:, None]
 
-        return A/h**n
+        return A / h**n
 
     def derive(self, x, y, n=1):
         """
@@ -157,23 +154,23 @@ class Stencil(object):
 
         """
 
-        l = len(x)
-        h = x[1]-x[0]
+        m = len(x)
+        h = x[1] - x[0]
 
-        return np.dot(self.difference_matrix(n, l, h), y)
+        return np.dot(self.difference_matrix(n, m, h), y)
 
-    def integral_matrix(self, n, l, h, fix_edge=True):
+    def integral_matrix(self, n, m, h, fix_edge=True):
         """
         Return an lxl matrix for integration of a function
         evaluated on l points:
-               _ 
-              | 
+               _
+              |
         A.f = |  f dx
-             _| 
+             _|
 
         Arguments:
         |   n (int): order of the Taylor approximation to use.
-        |   l (int): size of the matrix
+        |   m (int): size of the matrix
         |   h (float): evaluation step
         |   fix_edge (bool): if True, normalize all rows corresponding to
         |                    edge points (default True).
@@ -184,22 +181,22 @@ class Stencil(object):
 
         """
 
-        A = np.zeros((l, l))
+        A = np.zeros((m, m))
         weights = self.integral_weights(n)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(l-abs(s)), k=s)
+            A += np.diag([w] * (m - abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
-            A /= np.sum(A, axis=1)[:,None]
+            A /= np.sum(A, axis=1)[:, None]
 
         # Cumulation
-        A = np.dot(np.tril(np.ones((l, l))), A)
+        A = np.dot(np.tril(np.ones((m, m))), A)
 
-        return A*h
+        return A * h
 
-    def integrate(self, x, y, n=1):
+    def integrate(self, x, y, n=1, initial=0.0):
         """
         Compute the integral of y in x at the order n using this stencil.
         Warning: the integral may be unreliable at the edges.
@@ -214,7 +211,10 @@ class Stencil(object):
 
         """
 
-        l = len(x)
-        h = x[1]-x[0]
+        m = len(x)
+        h = x[1] - x[0]
 
-        return np.dot(self.integral_matrix(n, l, h), y)
+        y_int = self.integral_matrix(n, m, h)[:-1] @ y
+        y_int = np.concatenate([[initial], y_int + initial])
+
+        return y_int
