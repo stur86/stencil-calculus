@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name="Stencyl Calculus",
-    version="0.5",
+    version="0.6.0",
     description="A small set of Python functions for finite differences calculus with"
     " given stencils",
     author="Simone Sturniolo",
