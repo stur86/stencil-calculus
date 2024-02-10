@@ -99,11 +99,13 @@ class Stencil(object):
         """
 
         cint = np.zeros(self._L)
-        s_ext = max(self.stencil)-min(self.stencil)  # Extent of the stencil
+        
+        s_max = np.amax(self.stencil)
+        s_min = np.amin(self.stencil)
 
         for i in range(n+1):
             cf = self.difference_weights(i, True)
-            cint += cf/(i+1.0)*(s_ext)**i
+            cint += cf/(i+1.0)*(s_max**(i+1)-s_min**(i+1))
 
         return cint
 
