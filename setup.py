@@ -12,4 +12,6 @@ setup(
     url="https://github.com/stur86/stencil-calculus",
     packages=["stencils"],
     install_requites=["numpy"],
+    # pytest only needed for testing
+    tests_require=["pytest"],
 )
