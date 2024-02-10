@@ -100,12 +100,9 @@ class Stencil(object):
 
         cint = np.zeros(self._L)
         
-        s_max = np.amax(self.stencil)
-        s_min = np.amin(self.stencil)
-
         for i in range(n+1):
             cf = self.difference_weights(i, True)
-            cint += cf/(i+1.0)*(s_max**(i+1)-s_min**(i+1))
+            cint += cf/(i+1.0)
 
         return cint
 
@@ -201,7 +198,7 @@ class Stencil(object):
 
         return A*h
 
-    def integrate(self, x, y, n=1):
+    def integrate(self, x, y, n=1, initial=0.0):
         """
         Compute the integral of y in x at the order n using this stencil.
         Warning: the integral may be unreliable at the edges.
@@ -218,5 +215,8 @@ class Stencil(object):
 
         m = len(x)
         h = x[1]-x[0]
+        
+        y_int = self.integral_matrix(n, m, h)[:-1]@y
+        y_int = np.concatenate([[initial], y_int+initial])
 
-        return np.dot(self.integral_matrix(n, m, h), y)
+        return y_int

@@ -59,9 +59,8 @@ class TestStencil(unittest.TestCase):
 
         # Differentiation functions to test
         x = np.linspace(0, 10, 1000)
-        h = x[1]-x[0]
 
-        for fname, fdef in self.test_funcs.iteritems():
+        for fdef in self.test_funcs.values():
             f = fdef['f'](x)
             for n in fdef['df']:
                 df = fdef['df'][n](x)
@@ -74,20 +73,29 @@ class TestStencil(unittest.TestCase):
         # Trapezoidal rule
         st = Stencil([0, 1])
         self.assertTrue(np.allclose(st.integral_weights(1), [0.5, 0.5]))
-        # Simpson's rule
-        st = Stencil([0, 1, 2])
-        self.assertTrue(np.allclose(st.integral_weights(2)*6, [1, 4, 1]))
+        # Three point stencil
+        st = Stencil([-1, 0, 1])
+        self.assertTrue(np.allclose(st.integral_weights(2), [-1/12, 2/3, 5/12]))
 
         # Integration functions to test
         x = np.linspace(0, 10, 1000)
-        h = x[1]-x[0]
-
-        for fname, fdef in self.test_funcs.iteritems():
+        
+        for fdef in self.test_funcs.values():
             f = fdef['f'](x)
             F = fdef['F'](x)-fdef['F'](x[0])
-            self.assertLess(np.sum((F[1:-1]-st.integrate(x, f, 2)[1:-1])**2
-                                   )**0.5 /
-                            np.sum(F[1:-1]**2)**0.5, 1e-2)
+            
+            st2 = Stencil(np.arange(0, 2))
+            st3 = Stencil(np.arange(0, 3))
+            st4 = Stencil(np.arange(0, 4))
+            
+            Fs2 = st2.integrate(x, f, 1)
+            Fs3 = st3.integrate(x, f, 2)
+            Fs4 = st4.integrate(x, f, 3)
+            
+            self.assertTrue(np.allclose(Fs2, F, rtol=1e-4))
+            self.assertTrue(np.allclose(Fs3, F, rtol=1e-4))
+            self.assertTrue(np.allclose(Fs4, F, rtol=1e-4))
+                                
 
 if __name__ == '__main__':
     unittest.main()
