@@ -5,9 +5,9 @@ import numpy as np
 
 def fac(n):
     if n < 0:
-        raise ValueError('Factorial of a negative number is invalid')
+        raise ValueError("Factorial of a negative number is invalid")
     else:
-        return np.prod(np.arange(1, n+1))
+        return np.prod(np.arange(1, n + 1))
 
 
 class Stencil(object):
@@ -30,11 +30,10 @@ class Stencil(object):
     """
 
     def __init__(self, stencil):
-
         # Check that it is valid
         stencil = np.array(stencil)
         if not (len(stencil.shape) == 1) or not (stencil % 1 == 0).all():
-            raise ValueError('Invalid stencil')
+            raise ValueError("Invalid stencil")
 
         self._stencil = np.array(stencil).astype(int)
         self._L = len(stencil)
@@ -66,12 +65,11 @@ class Stencil(object):
         """
 
         if n >= self._L:
-            raise ValueError(
-                'Stencil length must be greater than derivative order n')
+            raise ValueError("Stencil length must be greater than derivative order n")
 
         s = self.stencil
 
-        A = s[None, :]**np.arange(0, self._L)[:, None]
+        A = s[None, :] ** np.arange(0, self._L)[:, None]
         b = np.zeros(self._L)
         b[n] = 1 if div_fac else fac(n)
         return np.linalg.solve(A, b)
@@ -99,10 +97,10 @@ class Stencil(object):
         """
 
         cint = np.zeros(self._L)
-        
-        for i in range(n+1):
+
+        for i in range(n + 1):
             cf = self.difference_weights(i, True)
-            cint += cf/(i+1.0)
+            cint += cf / (i + 1.0)
 
         return cint
 
@@ -133,13 +131,13 @@ class Stencil(object):
         weights = self.difference_weights(n, div_fac)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(m-abs(s)), k=s)
+            A += np.diag([w] * (m - abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
             A *= np.where(np.isclose(np.sum(A, axis=1), 0), 1, 0)[:, None]
 
-        return A/h**n
+        return A / h**n
 
     def derive(self, x, y, n=1):
         """
@@ -157,7 +155,7 @@ class Stencil(object):
         """
 
         m = len(x)
-        h = x[1]-x[0]
+        h = x[1] - x[0]
 
         return np.dot(self.difference_matrix(n, m, h), y)
 
@@ -165,10 +163,10 @@ class Stencil(object):
         """
         Return an lxl matrix for integration of a function
         evaluated on l points:
-               _ 
-              | 
+               _
+              |
         A.f = |  f dx
-             _| 
+             _|
 
         Arguments:
         |   n (int): order of the Taylor approximation to use.
@@ -187,16 +185,16 @@ class Stencil(object):
         weights = self.integral_weights(n)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(m-abs(s)), k=s)
+            A += np.diag([w] * (m - abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
-            A /= np.sum(A, axis=1)[:,None]
+            A /= np.sum(A, axis=1)[:, None]
 
         # Cumulation
         A = np.dot(np.tril(np.ones((m, m))), A)
 
-        return A*h
+        return A * h
 
     def integrate(self, x, y, n=1, initial=0.0):
         """
@@ -214,9 +212,9 @@ class Stencil(object):
         """
 
         m = len(x)
-        h = x[1]-x[0]
-        
-        y_int = self.integral_matrix(n, m, h)[:-1]@y
-        y_int = np.concatenate([[initial], y_int+initial])
+        h = x[1] - x[0]
+
+        y_int = self.integral_matrix(n, m, h)[:-1] @ y
+        y_int = np.concatenate([[initial], y_int + initial])
 
         return y_int

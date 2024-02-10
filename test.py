@@ -79,23 +79,23 @@ class TestStencil(unittest.TestCase):
 
         # Integration functions to test
         x = np.linspace(0, 10, 1000)
-        
+
         for fdef in self.test_funcs.values():
             f = fdef['f'](x)
             F = fdef['F'](x)-fdef['F'](x[0])
-            
+
             st2 = Stencil(np.arange(0, 2))
             st3 = Stencil(np.arange(0, 3))
             st4 = Stencil(np.arange(0, 4))
-            
+
             Fs2 = st2.integrate(x, f, 1)
             Fs3 = st3.integrate(x, f, 2)
             Fs4 = st4.integrate(x, f, 3)
-            
+
             self.assertTrue(np.allclose(Fs2, F, rtol=1e-4))
             self.assertTrue(np.allclose(Fs3, F, rtol=1e-4))
             self.assertTrue(np.allclose(Fs4, F, rtol=1e-4))
-                                
+
 
 if __name__ == '__main__':
     unittest.main()
