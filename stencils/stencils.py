@@ -107,7 +107,7 @@ class Stencil(object):
 
         return cint
 
-    def difference_matrix(self, n, l, h, div_fac=False, fix_edge=True):
+    def difference_matrix(self, n, m, h, div_fac=False, fix_edge=True):
         """
         Return an lxl matrix for differentiation of order n of a function
         evaluated on l points:
@@ -116,7 +116,7 @@ class Stencil(object):
 
         Arguments:
         |   n (int): order of requested derivative
-        |   l (int): size of the matrix
+        |   m (int): size of the matrix
         |   h (float): evaluation step
         |   div_fac (bool):  if True, return the cohefficients of the
         |                    derivative divided by n!. This is convenient for
@@ -130,11 +130,11 @@ class Stencil(object):
 
         """
 
-        A = np.zeros((l, l))
+        A = np.zeros((m, m))
         weights = self.difference_weights(n, div_fac)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(l-abs(s)), k=s)
+            A += np.diag([w]*(m-abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
@@ -157,12 +157,12 @@ class Stencil(object):
 
         """
 
-        l = len(x)
+        m = len(x)
         h = x[1]-x[0]
 
-        return np.dot(self.difference_matrix(n, l, h), y)
+        return np.dot(self.difference_matrix(n, m, h), y)
 
-    def integral_matrix(self, n, l, h, fix_edge=True):
+    def integral_matrix(self, n, m, h, fix_edge=True):
         """
         Return an lxl matrix for integration of a function
         evaluated on l points:
@@ -173,7 +173,7 @@ class Stencil(object):
 
         Arguments:
         |   n (int): order of the Taylor approximation to use.
-        |   l (int): size of the matrix
+        |   m (int): size of the matrix
         |   h (float): evaluation step
         |   fix_edge (bool): if True, normalize all rows corresponding to
         |                    edge points (default True).
@@ -184,18 +184,18 @@ class Stencil(object):
 
         """
 
-        A = np.zeros((l, l))
+        A = np.zeros((m, m))
         weights = self.integral_weights(n)
 
         for s, w in zip(self.stencil, weights):
-            A += np.diag([w]*(l-abs(s)), k=s)
+            A += np.diag([w]*(m-abs(s)), k=s)
 
         # Fix edges
         if fix_edge:
             A /= np.sum(A, axis=1)[:,None]
 
         # Cumulation
-        A = np.dot(np.tril(np.ones((l, l))), A)
+        A = np.dot(np.tril(np.ones((m, m))), A)
 
         return A*h
 
@@ -214,7 +214,7 @@ class Stencil(object):
 
         """
 
-        l = len(x)
+        m = len(x)
         h = x[1]-x[0]
 
-        return np.dot(self.integral_matrix(n, l, h), y)
+        return np.dot(self.integral_matrix(n, m, h), y)
